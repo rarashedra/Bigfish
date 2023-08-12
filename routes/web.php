@@ -66,6 +66,17 @@ Route::get('paypal-status', 'PaypalPaymentController@getPaymentStatus')->name('p
 /*Route::get('stripe', function (){
 return view('stripe-test');
 });*/
+//wallet stripe
+Route::get('add-fund', 'PaymentController@add_fund');
+Route::get('wallet-pay-stripe', 'WalletStripePaymentController@payment_process_3d')->name('wallet-pay-stripe');
+Route::get('wallet-pay-stripe/success/{wallet_id}/{transaction_ref}', 'WalletStripePaymentController@success')->name('wallet-pay-stripe.success');
+Route::get('wallet-pay-stripe/fail/{wallet_id}', 'WalletStripePaymentController@fail')->name('wallet-pay-stripe.fail');
+//wallet bigfish
+
+Route::get('bigfish-wallet', 'WalletBigfishController@payment')->name('bigfish-wallet');
+Route::any('bigfish-wallet-callback', 'WalletBigfishController@callback')->name('bigfish-wallet-callback');
+Route::any('bigfish-wallet-notification', 'WalletBigfishController@notification')->name('bigfish-wallet-notification');
+
 
 Route::get('pay-stripe', 'StripePaymentController@payment_process_3d')->name('pay-stripe');
 Route::get('pay-stripe/success/{order_id}/{transaction_ref}', 'StripePaymentController@success')->name('pay-stripe.success');
@@ -88,6 +99,11 @@ return redirect('/admin/auth/login');
 
 Route::get('payment-success', 'PaymentController@success')->name('payment-success');
 Route::get('payment-fail', 'PaymentController@fail')->name('payment-fail');
+
+//wallet
+
+Route::get('wallet-payment-success', 'PaymentController@wallet_success')->name('wallet-payment-success');
+Route::get('wallet-payment-fail', 'PaymentController@wallet_fail')->name('wallet-payment-fail');
 
 //senang pay
 Route::match(['get', 'post'], '/return-senang-pay', 'SenangPayController@return_senang_pay')->name('return-senang-pay');

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\CentralLogics\Helpers;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\WalletPayment;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -33,7 +36,46 @@ class PaymentController extends Controller
 
         return response()->json(['errors' => ['code' => 'order-payment', 'message' => 'Data not found']], 403);
     }
-    
+    public function add_fund(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required',
+            'payment_method' => 'required',
+            'user_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => Helpers::error_processor($validator)], 403);
+        }
+        $id = $request->user_id;
+        $customer = User::find($id);
+
+        $wallet_amount = $request->amount;
+
+        if (!isset($customer)) {
+            return response()->json(['errors' => ['message' => 'Customer not found']], 403);
+        }
+
+        if (!isset($wallet_amount)) {
+            return response()->json(['errors' => ['message' => 'Amount not found']], 403);
+        }
+
+        if (!$request->has('payment_method')) {
+            return response()->json(['errors' => ['message' => 'Payment not found']], 403);
+        }
+        //for plugin payment gateway
+
+            $wallet = new WalletPayment();
+            $wallet->user_id = $request->user_id;
+            $wallet->amount = $request->amount;
+            $wallet->payment_status = 'pending';
+            $wallet->payment_method = $request->payment_method;
+            $wallet->save();
+
+            $type='add_fund';
+            return view('wallet-payment-view',compact('type','wallet'));
+    }
+
     public function paypal(Request $request)
     {
         if ($request->has('callback')) {
@@ -59,8 +101,8 @@ class PaymentController extends Controller
 
         return response()->json(['errors' => ['code' => 'order-payment', 'message' => 'Data not found']], 403);
     }
-    
-    
+
+
         public function stripe(Request $request)
     {
         if ($request->has('callback')) {
@@ -86,7 +128,7 @@ class PaymentController extends Controller
 
         return response()->json(['errors' => ['code' => 'order-payment', 'message' => 'Data not found']], 403);
     }
-    
+
      public function mbh(Request $request)
     {
         if ($request->has('callback')) {
@@ -108,12 +150,12 @@ class PaymentController extends Controller
             ];
             session()->put('data', $data);
           //  return view('paypal-payment-view');
-          
+
            $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, 'https://system-test.paymentgateway.hu/api/payment/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {      
+curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {
     "StoreName":"marwa",
     "ProviderName":"MKBSZEP",
     "ResponseUrl":"https://panel.marwa.hu/response-bigfish",
@@ -144,14 +186,14 @@ $response = json_decode($result, true);
     //  return $response;
       $transactionid = $response['TransactionId'];
       session()->put('bigfish_transactionid',$transactionid);
-      
+
       $url = "https://system-test.paymentgateway.hu/Start?TransactionId=".$transactionid;
       return redirect()->to($url);
         }
 
         return response()->json(['errors' => ['code' => 'order-payment', 'message' => 'Data not found']], 403);
     }
-    
+
     public function otp(Request $request)
     {
         log('Hello hi');
@@ -179,7 +221,7 @@ $response = json_decode($result, true);
 curl_setopt($ch, CURLOPT_URL, 'https://system-test.paymentgateway.hu/api/payment/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {      
+curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {
     "StoreName":"marwa",
     "ProviderName":"OTP",
     "ResponseUrl":"https://panel.marwa.hu/response-bigfishotp",
@@ -207,14 +249,14 @@ $response = json_decode($result, true);
 
       $transactionid = $response['TransactionId'];
       session()->put('bigfish_transactionid',$transactionid);
-      
+
       $url = "https://system-test.paymentgateway.hu/Start?TransactionId=".$transactionid;
       return redirect()->to($url);
         }
 
         return response()->json(['errors' => ['code' => 'order-payment', 'message' => 'Data not found']], 403);
     }
-    
+
     public function kh(Request $request)
     {
         if ($request->has('callback')) {
@@ -236,12 +278,12 @@ $response = json_decode($result, true);
             ];
             session()->put('data', $data);
           //  return view('paypal-payment-view');
-          
+
            $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, 'https://system-test.paymentgateway.hu/api/payment/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {      
+curl_setopt($ch, CURLOPT_POSTFIELDS, 'method=Init&json=    {
     "StoreName":"marwa",
     "ProviderName":"KHBSZEP",
     "ResponseUrl":"https://panel.marwa.hu/response-bigfishkh",
@@ -267,10 +309,10 @@ curl_close($ch);
 $response = json_decode($result, true);
 
 
-      
+
       $transactionid = $response['TransactionId'];
       session()->put('bigfish_transactionid',$transactionid);
-      
+
       $url = "https://system-test.paymentgateway.hu/Start?TransactionId=".$transactionid;
       return redirect()->to($url);
         }
@@ -295,5 +337,22 @@ $response = json_decode($result, true);
         }
         return response()->json(['message' => 'Payment failed'], 403);
     }
-    
+    public function wallet_success(Request $request)
+    {
+        $wallet = WalletPayment::where('id',$request->wallet_id)->first();
+        if (isset($wallet) && $wallet->callback != null) {
+            return redirect($wallet->callback . '&status=success');
+        }
+        return response()->json(['message' => 'Payment succeeded'], 200);
+    }
+
+    public function wallet_fail(Request $request)
+    {
+        $wallet = WalletPayment::where('id',$request->wallet_id)->first();
+        if (isset($wallet) && $wallet->callback != null) {
+            return redirect($wallet->callback . '&status=fail');
+        }
+        return response()->json(['message' => 'Payment failed'], 403);
+    }
+
 }

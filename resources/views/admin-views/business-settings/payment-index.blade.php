@@ -225,12 +225,16 @@
                         <div class="payment--gateway-img">
                             <img src="{{asset('/public/assets/admin/img/payment/stripe.png')}}" alt="public">
                         </div>
+                        <div class="form-group mb-4">
+                            <input class="form-control" type="number" placeholder="Percentage" name="percentage" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.stripe_percentage') }}"
+                                       value="{{env('APP_MODE')!='demo'?($config?$config['percentage']:''):''}}">
+                        </div>
                             <div class="form-group mb-4">
-                                <input class="form-control" type="text" placeholder="Publish Key" name="published_key"
+                                <input class="form-control" type="text" placeholder="Publish Key" name="published_key" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.publish_key') }}"
                                            value="{{env('APP_MODE')!='demo'?($config?$config['published_key']:''):''}}">
                             </div>
                             <div class="form-group mb-4">
-                                <input class="form-control" type="text" placeholder="Api Key" name="api_key"
+                                <input class="form-control" type="text" placeholder="Api Key" name="api_key" {{ translate('messages.api_key') }}
                                            value="{{env('APP_MODE')!='demo'?($config?$config['api_key']:''):''}}">
                             </div>
                             <div class="text-right">
@@ -748,21 +752,25 @@
                                     </select>
                                 </div>
                                 <div class="form-group mb-4">
-                                    <input class="form-control" type="text" placeholder="Api Key" name="api_key"
+                                    <input class="form-control" type="number" placeholder="Percentage" name="percentage" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.stripe_percentage') }}"
+                                               value="{{env('APP_MODE')!='demo'?($config?$config['percentage']:''):''}}">
+                                </div>
+                                <div class="form-group mb-4">
+                                    <input class="form-control" type="text" placeholder="Api Key" name="api_key" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.api_key') }}"
                                         value="{{ env('APP_MODE') != 'demo' ? $config['api_key'] : '' }}">
                                 </div>
                                 <div class="form-group mb-4">
                                     <input class="form-control" type="text" placeholder="Store Name"
-                                        name="store_name"
+                                        name="store_name" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.store_name') }}"
                                         value="{{ env('APP_MODE') != 'demo' ? $config['store_name'] : '' }}">
                                 </div>
                                 <div class="form-group mb-4">
                                     @php($url = parse_url(url(''), PHP_URL_HOST))
-                                    <input class="form-control" type="text" placeholder="Domain Url" name="domain"
+                                    <input class="form-control" type="text" placeholder="Domain Url" name="domain" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.domain') }}"
                                         value="{{ env('APP_MODE') != 'demo' ? "{$url}" : '' }}" readonly>
                                 </div>
                                 <div class="form-group mb-4">
-                                    <input class="form-control" type="text" placeholder="Store ID" name="store_id"
+                                    <input class="form-control" type="text" placeholder="Store ID" name="store_id" data-toggle="tooltip" data-placement="top" title="{{ translate('messages.store_id') }}"
                                         value="{{ env('APP_MODE') != 'demo' ? $config['store_id'] : '' }}">
                                 </div>
                                 <div class="btn--container justify-content-end">

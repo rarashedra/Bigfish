@@ -18,25 +18,22 @@ use Illuminate\Support\Facades\Storage;
 
 class BusinessSettingsController extends Controller
 {
-    public function business_index($tab='business')
+    public function business_index($tab = 'business')
     {
-        if(!Helpers::module_permission_check('settings')){
+        if (!Helpers::module_permission_check('settings')) {
             Toastr::error(translate('messages.access_denied'));
             return back();
         }
-        if($tab == 'business')
-        {
+        if ($tab == 'business') {
             return view('admin-views.business-settings.business-index');
-        }else if($tab == 'customer')
-        {
-            $data = BusinessSetting::where('key','like','wallet_%')
-            ->orWhere('key','like','loyalty_%')
-            ->orWhere('key','like','ref_earning_%')
-            ->orWhere('key','like','ref_earning_%')->get();
-            $data = array_column($data->toArray(), 'value','key');
+        } else if ($tab == 'customer') {
+            $data = BusinessSetting::where('key', 'like', 'wallet_%')
+                ->orWhere('key', 'like', 'loyalty_%')
+                ->orWhere('key', 'like', 'ref_earning_%')
+                ->orWhere('key', 'like', 'ref_earning_%')->get();
+            $data = array_column($data->toArray(), 'value', 'key');
             return view('admin-views.business-settings.customer-index', compact('data'));
-        }else if($tab == 'deliveryman')
-        {
+        } else if ($tab == 'deliveryman') {
             return view('admin-views.business-settings.deliveryman-index');
         }
     }
@@ -104,20 +101,20 @@ class BusinessSettingsController extends Controller
             $image_name = $fav_icon['value'];
         }
 
-        if(session()->has('currency_symbol')){
+        if (session()->has('currency_symbol')) {
             session()->forget('currency_symbol');
         }
-        if(session()->has('currency_code')){
+        if (session()->has('currency_code')) {
             session()->forget('currency_code');
         }
-        if(session()->has('currency_symbol_position')){
+        if (session()->has('currency_symbol_position')) {
             session()->forget('currency_symbol_position');
         }
 
         DB::table('business_settings')->updateOrInsert(['key' => 'site_direction'], [
             'value' => $request['site_direction']
         ]);
-        
+
         DB::table('business_settings')->updateOrInsert(['key' => 'icon'], [
             'value' => $image_name
         ]);
@@ -439,6 +436,7 @@ class BusinessSettingsController extends Controller
                     'key'        => 'stripe',
                     'value'      => json_encode([
                         'status'        => 1,
+                        'percentage' => 0,
                         'api_key'       => '',
                         'published_key' => '',
                     ]),
@@ -450,6 +448,7 @@ class BusinessSettingsController extends Controller
                     'key'        => 'stripe',
                     'value'      => json_encode([
                         'status'        => $request['status'],
+                        'percentage'    => $request['percentage'] ?? 0,
                         'api_key'       => $request['api_key'],
                         'published_key' => $request['published_key'],
                     ]),
@@ -601,11 +600,12 @@ class BusinessSettingsController extends Controller
                 ]),
                 'updated_at' => now()
             ]);
-        }  elseif ($name == 'bigfish') {
+        } elseif ($name == 'bigfish') {
             DB::table('business_settings')->updateOrInsert(['key' => 'bigfish'], [
                 'value' => json_encode([
                     'status' => $request['status'],
                     'mode' => $request['mode'],
+                    'percentage' => $request['percentage'] ?? 0,
                     'api_key' => $request['api_key'],
                     'store_name' => $request['store_name'],
                     'store_id' => $request['store_id'],
@@ -702,7 +702,7 @@ class BusinessSettingsController extends Controller
             return view('admin-views.business-settings.landing-page-settings.backgroundChange');
         } else if ($tab == 'web-app') {
             return view('admin-views.business-settings.landing-page-settings.web-app');
-        }else if ($tab == 'react') {
+        } else if ($tab == 'react') {
             return view('admin-views.business-settings.landing-page-settings.react');
         } else if ($tab == 'react-feature') {
             return view('admin-views.business-settings.landing-page-settings.react_feature');
@@ -1042,13 +1042,13 @@ class BusinessSettingsController extends Controller
                 'value' => json_encode($data)
             ]);
             Toastr::success(translate('messages.web_app_landing_page_settings'));
-        }else if ($tab == 'react_header') {
+        } else if ($tab == 'react_header') {
             $data = null;
             $image = BusinessSetting::where('key', 'react_header_banner')->first();
             if ($image) {
                 $data = $image->value;
             }
-            $image_name =$data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
+            $image_name = $data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
             if ($request->has('react_header_banner')) {
                 // $image_name = ;
                 $data = Helpers::update('react_landing/', $image_name, 'png', $request->file('react_header_banner')) ?? null;
@@ -1059,9 +1059,9 @@ class BusinessSettingsController extends Controller
             Toastr::success(translate('Landing page header banner updated'));
         } else if ($tab == 'hero-section') {
             $data = [];
-            $hero_section = BusinessSetting::where('key','hero_section')->first();
+            $hero_section = BusinessSetting::where('key', 'hero_section')->first();
             $data = [
-                'hero_section_heading' => $request->hero_section_heading ?? $hero_section['hero_section_heading'] ,
+                'hero_section_heading' => $request->hero_section_heading ?? $hero_section['hero_section_heading'],
                 'hero_section_slogan' => $request->hero_section_slogan ?? $hero_section['hero_section_slogan'],
                 'hero_section_short_description' => $request->hero_section_short_description ?? $hero_section['hero_section_short_description'],
             ];
@@ -1069,24 +1069,24 @@ class BusinessSettingsController extends Controller
                 'value' => json_encode($data)
             ]);
             Toastr::success(translate('messages.landing_page_hero_section_updated'));
-        }else if ($tab == 'full-banner') {
+        } else if ($tab == 'full-banner') {
             $data = [];
-            $banner_section_full = BusinessSetting::where('key','banner_section_full')->first();
+            $banner_section_full = BusinessSetting::where('key', 'banner_section_full')->first();
             $imageName = null;
-            if($banner_section_full){
+            if ($banner_section_full) {
                 $data = json_decode($banner_section_full->value, true);
-                $imageName =$data['banner_section_img_full'] ?? null;
+                $imageName = $data['banner_section_img_full'] ?? null;
             }
-            if ($request->has('banner_section_img_full'))   {
+            if ($request->has('banner_section_img_full')) {
                 if (empty($imageName)) {
                     $imageName = Helpers::upload('react_landing/', 'png', $request->file('banner_section_img_full'));
-                    }  else{
-                    $imageName= Helpers::update('react_landing/', $data['banner_section_img_full'], 'png', $request->file('banner_section_img_full')) ;
-                    }
+                } else {
+                    $imageName = Helpers::update('react_landing/', $data['banner_section_img_full'], 'png', $request->file('banner_section_img_full'));
+                }
             }
             $data = [
                 'banner_section_img_full' => $imageName,
-                'full_banner_section_title' => $request->full_banner_section_title ?? $banner_section_full['full_banner_section_title'] ,
+                'full_banner_section_title' => $request->full_banner_section_title ?? $banner_section_full['full_banner_section_title'],
                 'full_banner_section_sub_title' => $request->full_banner_section_sub_title ?? $banner_section_full['full_banner_section_sub_title'],
             ];
             DB::table('business_settings')->updateOrInsert(['key' => 'banner_section_full'], [
@@ -1095,55 +1095,53 @@ class BusinessSettingsController extends Controller
             Toastr::success(translate('messages.landing_page_banner_section_updated'));
         } else if ($tab == 'delivery-service-section') {
             $data = [];
-            $delivery_service_section = BusinessSetting::where('key','delivery_service_section')->first();
+            $delivery_service_section = BusinessSetting::where('key', 'delivery_service_section')->first();
             $imageName = null;
-            if($delivery_service_section){
+            if ($delivery_service_section) {
                 $data = json_decode($delivery_service_section->value, true);
-                $imageName =$data['delivery_service_section_image'] ?? null;
+                $imageName = $data['delivery_service_section_image'] ?? null;
             }
-            if ($request->has('delivery_service_section_image'))   {
+            if ($request->has('delivery_service_section_image')) {
                 if (empty($imageName)) {
                     $imageName = Helpers::upload('react_landing/', 'png', $request->file('delivery_service_section_image'));
-                    }  else{
-                    $imageName= Helpers::update('react_landing/', $data['delivery_service_section_image'], 'png', $request->file('delivery_service_section_image')) ;
-                    }
+                } else {
+                    $imageName = Helpers::update('react_landing/', $data['delivery_service_section_image'], 'png', $request->file('delivery_service_section_image'));
+                }
             }
             $data = [
                 'delivery_service_section_image' => $imageName,
-                'delivery_service_section_title' => $request->delivery_service_section_title ?? $delivery_service_section['delivery_service_section_title'] ,
+                'delivery_service_section_title' => $request->delivery_service_section_title ?? $delivery_service_section['delivery_service_section_title'],
                 'delivery_service_section_description' => $request->delivery_service_section_description ?? $delivery_service_section['delivery_service_section_description'],
             ];
             DB::table('business_settings')->updateOrInsert(['key' => 'delivery_service_section'], [
                 'value' => json_encode($data)
             ]);
             Toastr::success(translate('messages.landing_page_delivery_service_section_updated'));
-        }
-        else if ($tab == 'discount-banner') {
+        } else if ($tab == 'discount-banner') {
             $data = [];
-            $discount_banner = BusinessSetting::where('key','discount_banner')->first();
+            $discount_banner = BusinessSetting::where('key', 'discount_banner')->first();
             $imageName = null;
-            if($discount_banner){
+            if ($discount_banner) {
                 $data = json_decode($discount_banner->value, true);
-                $imageName =$data['img'] ?? null;
+                $imageName = $data['img'] ?? null;
             }
-            if ($request->has('img'))   {
+            if ($request->has('img')) {
                 if (empty($imageName)) {
                     $imageName = Helpers::upload('react_landing/', 'png', $request->file('img'));
-                    }  else{
-                    $imageName= Helpers::update('react_landing/', $data['img'], 'png', $request->file('img')) ;
-                    }
+                } else {
+                    $imageName = Helpers::update('react_landing/', $data['img'], 'png', $request->file('img'));
+                }
             }
             $data = [
                 'img' => $imageName,
-                'title' => $request->title ?? $discount_banner['title'] ,
+                'title' => $request->title ?? $discount_banner['title'],
                 'sub_title' => $request->sub_title ?? $discount_banner['sub_title'],
             ];
             DB::table('business_settings')->updateOrInsert(['key' => 'discount_banner'], [
                 'value' => json_encode($data)
             ]);
             Toastr::success(translate('messages.landing_page_discount_banner_section_updated'));
-        }
-        else if ($tab == 'banner-section-half') {
+        } else if ($tab == 'banner-section-half') {
 
             $data = [];
             $imageName = null;
@@ -1152,20 +1150,20 @@ class BusinessSettingsController extends Controller
                 $data = json_decode($banner_section_half->value, true);
             }
 
-            foreach($request->banner_section_half  as $key => $value){
+            foreach ($request->banner_section_half  as $key => $value) {
 
-                if($request->hasfile("banner_section_half.{$key}.img")){
-                    if(isset( $data[$key]['img']) && Storage::disk('public')->exists( 'react_landing/'. $data[$key]['img'])){
-                        Storage::disk('public')->delete('react_landing/'. $data[$key]['img']);
+                if ($request->hasfile("banner_section_half.{$key}.img")) {
+                    if (isset($data[$key]['img']) && Storage::disk('public')->exists('react_landing/' . $data[$key]['img'])) {
+                        Storage::disk('public')->delete('react_landing/' . $data[$key]['img']);
                     }
 
-                    $value['img']=Helpers::upload('react_landing/','png', $request->file("banner_section_half.{$key}.img"));
-                }elseif(isset($data[$key]['img'])){
-                    $value['img']=$data[$key]['img'];
-                }else{
-                    $value['img']=null;
+                    $value['img'] = Helpers::upload('react_landing/', 'png', $request->file("banner_section_half.{$key}.img"));
+                } elseif (isset($data[$key]['img'])) {
+                    $value['img'] = $data[$key]['img'];
+                } else {
+                    $value['img'] = null;
                 }
-                $data[$key]=$value;
+                $data[$key] = $value;
             }
 
             DB::table('business_settings')->updateOrInsert(['key' => 'banner_section_half'], [
@@ -1178,7 +1176,7 @@ class BusinessSettingsController extends Controller
             if ($image) {
                 $data = $image->value;
             }
-            $image_name =$data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
+            $image_name = $data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
             if ($request->has('app_section_image')) {
                 $data = Helpers::update('react_landing/', $image_name, 'png', $request->file('app_section_image')) ?? null;
             }
@@ -1192,7 +1190,7 @@ class BusinessSettingsController extends Controller
             if ($image) {
                 $data = $image->value;
             }
-            $image_name =$data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
+            $image_name = $data ?? \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . ".png";
             if ($request->has('footer_logo')) {
                 $data = Helpers::update('react_landing/', $image_name, 'png', $request->file('footer_logo')) ?? null;
             }
@@ -1200,7 +1198,7 @@ class BusinessSettingsController extends Controller
                 'value' => $data
             ]);
             Toastr::success(translate('Footer logo updated'));
-        }  else if ($tab == 'react-feature') {
+        } else if ($tab == 'react-feature') {
             $data = [];
             $imageName = null;
             $feature = BusinessSetting::where('key', 'react_feature')->first();
@@ -1208,7 +1206,7 @@ class BusinessSettingsController extends Controller
                 $data = json_decode($feature->value, true);
             }
             if ($request->has('image')) {
-                $imageName=Helpers::upload('react_landing/feature/','png', $request->file('image')) ;
+                $imageName = Helpers::upload('react_landing/feature/', 'png', $request->file('image'));
             }
             array_push($data, [
                 'img' => $imageName,
@@ -1220,7 +1218,7 @@ class BusinessSettingsController extends Controller
                 'value' => json_encode($data)
             ]);
             Toastr::success(translate('messages.landing_page_feature_updated'));
-        }  else if ($tab == 'app-download-button') {
+        } else if ($tab == 'app-download-button') {
             $data = [];
             $feature = BusinessSetting::where('key', 'app_download_button')->first();
             if ($feature) {
@@ -1498,8 +1496,8 @@ class BusinessSettingsController extends Controller
 
     public function update_fcm_messages(Request $request)
     {
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_pending_message')->first();
-        if($notification == null){
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_pending_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1508,22 +1506,22 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->pending_message[array_search('en', $request->lang)];
         $notification->status = $request['pending_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->pending_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->pending_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->pending_message[$index]]
                 );
             }
         }
 
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_confirmation_msg')->first();
-        if($notification == null){
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_confirmation_msg')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1532,48 +1530,48 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->confirm_message[array_search('en', $request->lang)];
         $notification->status = $request['confirm_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->confirm_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->confirm_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->confirm_message[$index]]
                 );
             }
         }
-        if($request->module_type != 'parcel'){
+        if ($request->module_type != 'parcel') {
 
-        
-            $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_processing_message')->first();
-            if($notification == null){
+
+            $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_processing_message')->first();
+            if ($notification == null) {
                 $notification = new NotificationMessage();
             }
-    
+
             $notification->key = 'order_processing_message';
             $notification->module_type = $request->module_type;
             $notification->message = $request->processing_message[array_search('en', $request->lang)];
             $notification->status = $request['processing_status'] == 1 ? 1 : 0;
             $notification->save();
-            foreach($request->lang as $index=>$key)
-            {
-                if($request->processing_message[$index] && $key != 'en')
-                {
+            foreach ($request->lang as $index => $key) {
+                if ($request->processing_message[$index] && $key != 'en') {
                     Translation::updateOrInsert(
-                        ['translationable_type'  => 'App\Models\NotificationMessage',
+                        [
+                            'translationable_type'  => 'App\Models\NotificationMessage',
                             'translationable_id'    => $notification->id,
                             'locale'                => $key,
-                            'key'                   => $notification->key],
+                            'key'                   => $notification->key
+                        ],
                         ['value'                 => $request->processing_message[$index]]
                     );
                 }
             }
 
-            $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_handover_message')->first();
-            if($notification == null){
+            $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_handover_message')->first();
+            if ($notification == null) {
                 $notification = new NotificationMessage();
             }
 
@@ -1582,22 +1580,22 @@ class BusinessSettingsController extends Controller
             $notification->message = $request->order_handover_message[array_search('en', $request->lang)];
             $notification->status = $request['order_handover_message_status'] == 1 ? 1 : 0;
             $notification->save();
-            foreach($request->lang as $index=>$key)
-            {
-                if($request->order_handover_message[$index] && $key != 'en')
-                {
+            foreach ($request->lang as $index => $key) {
+                if ($request->order_handover_message[$index] && $key != 'en') {
                     Translation::updateOrInsert(
-                        ['translationable_type'  => 'App\Models\NotificationMessage',
+                        [
+                            'translationable_type'  => 'App\Models\NotificationMessage',
                             'translationable_id'    => $notification->id,
                             'locale'                => $key,
-                            'key'                   => $notification->key],
+                            'key'                   => $notification->key
+                        ],
                         ['value'                 => $request->order_handover_message[$index]]
                     );
                 }
             }
 
-            $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_refunded_message')->first();
-            if($notification == null){
+            $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_refunded_message')->first();
+            if ($notification == null) {
                 $notification = new NotificationMessage();
             }
 
@@ -1606,23 +1604,23 @@ class BusinessSettingsController extends Controller
             $notification->message = $request->order_refunded_message[array_search('en', $request->lang)];
             $notification->status = $request['order_refunded_message_status'] == 1 ? 1 : 0;
             $notification->save();
-            foreach($request->lang as $index=>$key)
-            {
-                if($request->order_refunded_message[$index] && $key != 'en')
-                {
+            foreach ($request->lang as $index => $key) {
+                if ($request->order_refunded_message[$index] && $key != 'en') {
                     Translation::updateOrInsert(
-                        ['translationable_type'  => 'App\Models\NotificationMessage',
+                        [
+                            'translationable_type'  => 'App\Models\NotificationMessage',
                             'translationable_id'    => $notification->id,
                             'locale'                => $key,
-                            'key'                   => $notification->key],
+                            'key'                   => $notification->key
+                        ],
                         ['value'                 => $request->order_refunded_message[$index]]
                     );
                 }
             }
-            
-            $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','refund_request_canceled')->first();
 
-            if($notification == null){
+            $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'refund_request_canceled')->first();
+
+            if ($notification == null) {
                 $notification = new NotificationMessage();
             }
 
@@ -1631,24 +1629,24 @@ class BusinessSettingsController extends Controller
             $notification->message = $request->refund_request_canceled[array_search('en', $request->lang)];
             $notification->status = $request['refund_request_canceled_status'] == 1 ? 1 : 0;
             $notification->save();
-            foreach($request->lang as $index=>$key)
-            {
-                if($request->refund_request_canceled[$index] && $key != 'en')
-                {
+            foreach ($request->lang as $index => $key) {
+                if ($request->refund_request_canceled[$index] && $key != 'en') {
                     Translation::updateOrInsert(
-                        ['translationable_type'  => 'App\Models\NotificationMessage',
+                        [
+                            'translationable_type'  => 'App\Models\NotificationMessage',
                             'translationable_id'    => $notification->id,
                             'locale'                => $key,
-                            'key'                   => $notification->key],
+                            'key'                   => $notification->key
+                        ],
                         ['value'                 => $request->refund_request_canceled[$index]]
                     );
                 }
             }
         }
-    
-    
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','out_for_delivery_message')->first();
-        if($notification == null){
+
+
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'out_for_delivery_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1657,22 +1655,22 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->out_for_delivery_message[array_search('en', $request->lang)];
         $notification->status = $request['out_for_delivery_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->out_for_delivery_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->out_for_delivery_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->out_for_delivery_message[$index]]
                 );
             }
         }
-    
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_delivered_message')->first();
-        if($notification == null){
+
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_delivered_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1681,22 +1679,22 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->delivered_message[array_search('en', $request->lang)];
         $notification->status = $request['delivered_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->delivered_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->delivered_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->delivered_message[$index]]
                 );
             }
         }
-    
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','delivery_boy_assign_message')->first();
-        if($notification == null){
+
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'delivery_boy_assign_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1705,22 +1703,22 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->delivery_boy_assign_message[array_search('en', $request->lang)];
         $notification->status = $request['delivery_boy_assign_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->delivery_boy_assign_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->delivery_boy_assign_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->delivery_boy_assign_message[$index]]
                 );
             }
         }
-    
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','delivery_boy_delivered_message')->first();
-        if($notification == null){
+
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'delivery_boy_delivered_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1729,22 +1727,22 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->delivery_boy_delivered_message[array_search('en', $request->lang)];
         $notification->status = $request['delivery_boy_delivered_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->delivery_boy_delivered_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->delivery_boy_delivered_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->delivery_boy_delivered_message[$index]]
                 );
             }
         }
-    
-        $notification = NotificationMessage::where('module_type',$request->module_type)->where('key','order_cancled_message')->first();
-        if($notification == null){
+
+        $notification = NotificationMessage::where('module_type', $request->module_type)->where('key', 'order_cancled_message')->first();
+        if ($notification == null) {
             $notification = new NotificationMessage();
         }
 
@@ -1753,15 +1751,15 @@ class BusinessSettingsController extends Controller
         $notification->message = $request->order_cancled_message[array_search('en', $request->lang)];
         $notification->status = $request['order_cancled_message_status'] == 1 ? 1 : 0;
         $notification->save();
-        foreach($request->lang as $index=>$key)
-        {
-            if($request->order_cancled_message[$index] && $key != 'en')
-            {
+        foreach ($request->lang as $index => $key) {
+            if ($request->order_cancled_message[$index] && $key != 'en') {
                 Translation::updateOrInsert(
-                    ['translationable_type'  => 'App\Models\NotificationMessage',
+                    [
+                        'translationable_type'  => 'App\Models\NotificationMessage',
                         'translationable_id'    => $notification->id,
                         'locale'                => $key,
-                        'key'                   => $notification->key],
+                        'key'                   => $notification->key
+                    ],
                     ['value'                 => $request->order_cancled_message[$index]]
                 );
             }
@@ -1831,7 +1829,7 @@ class BusinessSettingsController extends Controller
         }
         $appleLoginServices = json_decode($apple->value, true);
         $socialLoginServices = json_decode($data->value, true);
-        return view('admin-views.business-settings.social-login.view', compact('socialLoginServices','appleLoginServices'));
+        return view('admin-views.business-settings.social-login.view', compact('socialLoginServices', 'appleLoginServices'));
     }
 
     public function updateSocialLogin($service, Request $request)
@@ -1862,7 +1860,7 @@ class BusinessSettingsController extends Controller
     {
         $appleLogin = BusinessSetting::where('key', 'apple_login')->first();
         $credential_array = [];
-        if($request->hasfile('service_file')){
+        if ($request->hasfile('service_file')) {
             $fileName = Helpers::upload('apple-login/', 'p8', $request->file('service_file'));
         }
         foreach (json_decode($appleLogin['value'], true) as $key => $data) {
@@ -1874,7 +1872,7 @@ class BusinessSettingsController extends Controller
                     'status' => $request['status'],
                     'team_id' => $request['team_id'],
                     'key_id' => $request['key_id'],
-                    'service_file' => isset($fileName)?$fileName:$data['service_file'],
+                    'service_file' => isset($fileName) ? $fileName : $data['service_file'],
                     'redirect_url' => $request['redirect_url'],
                 ];
                 array_push($credential_array, $cred);
@@ -1932,22 +1930,22 @@ class BusinessSettingsController extends Controller
     }
 
 
-    public function site_direction(Request $request){
+    public function site_direction(Request $request)
+    {
         if (env('APP_MODE') == 'demo') {
-            session()->put('site_direction', ($request->status == 1?'ltr':'rtl'));
+            session()->put('site_direction', ($request->status == 1 ? 'ltr' : 'rtl'));
             return response()->json();
         }
-        if($request->status == 1){
+        if ($request->status == 1) {
             DB::table('business_settings')->updateOrInsert(['key' => 'site_direction'], [
                 'value' => 'ltr'
             ]);
-        } else
-        {
+        } else {
             DB::table('business_settings')->updateOrInsert(['key' => 'site_direction'], [
                 'value' => 'rtl'
             ]);
         }
-        return ;
+        return;
     }
 
     public function react_setup()
@@ -1959,32 +1957,31 @@ class BusinessSettingsController extends Controller
     public function react_update(Request $request)
     {
         $request->validate([
-            'react_license_code'=>'required',
-            'react_domain'=>'required'
-        ],[
-            'react_license_code.required'=>translate('messages.license_code_is_required'),
-            'react_domain.required'=>translate('messages.doamain_is_required'),
+            'react_license_code' => 'required',
+            'react_domain' => 'required'
+        ], [
+            'react_license_code.required' => translate('messages.license_code_is_required'),
+            'react_domain.required' => translate('messages.doamain_is_required'),
         ]);
-        if(Helpers::activation_submit($request['react_license_code'])){
+        if (Helpers::activation_submit($request['react_license_code'])) {
             DB::table('business_settings')->updateOrInsert(['key' => 'react_setup'], [
                 'value' => json_encode([
-                    'status'=>1,
-                    'react_license_code'=>$request['react_license_code'],
-                    'react_domain'=>$request['react_domain'],
+                    'status' => 1,
+                    'react_license_code' => $request['react_license_code'],
+                    'react_domain' => $request['react_domain'],
                     'react_platform' => 'codecanyon'
                 ])
             ]);
 
             Toastr::success(translate('messages.react_data_updated'));
             return back();
-        }
-        elseif(Helpers::react_activation_check($request->react_domain, $request->react_license_code)){
+        } elseif (Helpers::react_activation_check($request->react_domain, $request->react_license_code)) {
 
             DB::table('business_settings')->updateOrInsert(['key' => 'react_setup'], [
                 'value' => json_encode([
-                    'status'=>1,
-                    'react_license_code'=>$request['react_license_code'],
-                    'react_domain'=>$request['react_domain'],
+                    'status' => 1,
+                    'react_license_code' => $request['react_license_code'],
+                    'react_domain' => $request['react_domain'],
                     'react_platform' => 'iss'
                 ])
             ]);
@@ -1993,6 +1990,6 @@ class BusinessSettingsController extends Controller
             return back();
         }
         Toastr::error(translate('messages.Invalid_license_code_or_unregistered_domain'));
-        return back()->withInput(['invalid-data'=>true]);
+        return back()->withInput(['invalid-data' => true]);
     }
 }
