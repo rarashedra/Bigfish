@@ -2713,4 +2713,6 @@
   'select OTP K&H and MBH payment system' => 'Select OTP K&H and MBH payment system',
   'Thank you for the joinning request on' => 'Thank you for the joinning request on',
   'Registration request successfull' => 'Registration request successfull',
+  'ongoing' => 'Ongoing',
+  'on going' => 'On going',
 );

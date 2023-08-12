@@ -33,7 +33,6 @@ class OrderController extends Controller
 {
     public function list($status, Request $request)
     {
-        // dd($status);
         if (session()->has('zone_filter') == false) {
             session()->put('zone_filter', 0);
         }
@@ -123,8 +122,9 @@ class OrderController extends Controller
         $to_date = isset($request->to_date) ? $request->to_date : null;
         $order_type = isset($request->order_type) ? $request->order_type : null;
         $total = $orders->total();
-
-
+        if($status == 'on_going'){
+            return view('admin-views.order.ongoing_list', compact('orders', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total', 'order_type'));
+        }
         return view('admin-views.order.list', compact('orders', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total', 'order_type'));
     }
 
@@ -924,11 +924,11 @@ class OrderController extends Controller
                     if ($c['item_campaign_id'] != null) {
                         $product = ItemCampaign::find($c['item_campaign_id']);
                         if ($product) {
-    
+
                             $price = $c['price'];
-    
+
                             $product = Helpers::product_data_formatting($product);
-    
+
                             $c->item_details = json_encode($product);
                             $c->updated_at = now();
                             if (isset($c->id)) {
@@ -952,7 +952,7 @@ class OrderController extends Controller
                             } else {
                                 $c->save();
                             }
-    
+
                             $total_addon_price += $c['total_add_on_price'];
                             $product_price += $price * $c['quantity'];
                             $store_discount_amount += $c['discount_on_item'] * $c['quantity'];
@@ -966,9 +966,9 @@ class OrderController extends Controller
                         $product = Item::find($c['item_id']);
                         if ($product) {
                             $price = $c['price'];
-    
+
                             $product = Helpers::product_data_formatting($product);
-    
+
                             $c->item_details = json_encode($product);
                             $c->updated_at = now();
                             if (isset($c->id)) {
@@ -992,7 +992,7 @@ class OrderController extends Controller
                             } else {
                                 $c->save();
                             }
-    
+
                             $total_addon_price += $c['total_add_on_price'];
                             $product_price += $price * $c['quantity'];
                             $store_discount_amount += $c['discount_on_item'] * $c['quantity'];
