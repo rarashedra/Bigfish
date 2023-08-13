@@ -83,7 +83,7 @@
                                     {{ $order['cancellation_reason'] }}
                                 </h6>
                                 @endif
-    
+
                                 @if ($order['order_note'])
                                     <h6>
                                         {{ translate('messages.order') }} {{ translate('messages.note') }} :
@@ -272,11 +272,11 @@
                         $total_addon_price = 0;
                         $product_price = 0;
                         $store_discount_amount = 0;
-                        
+
                         if ($order->prescription_order == 1) {
                             $product_price = $order['order_amount'] - $order['delivery_charge'] - $order['total_tax_amount'] - $order['dm_tips'] + $order['store_discount_amount'];
                         }
-                        
+
                         $total_addon_price = 0;
                         ?>
                         <div class="table-responsive">
@@ -487,19 +487,19 @@
                             <hr>
                         </div>
                         <?php
-                        
+
                         $coupon_discount_amount = $order['coupon_discount_amount'];
-                        
+
                         $total_price = $product_price + $total_addon_price - $store_discount_amount - $coupon_discount_amount;
-                        
+
                         $total_tax_amount = $order['total_tax_amount'];
                         if($order->tax_status == 'included'){
                                 $total_tax_amount=0;
                             }
                         $tax_included = \App\Models\BusinessSetting::where(['key'=>'tax_included'])->first() ?  \App\Models\BusinessSetting::where(['key'=>'tax_included'])->first()->value : 0;
-                        
+
                         $store_discount_amount = $order['store_discount_amount'];
-                        
+
                         ?>
                         <div class="row justify-content-md-end mb-3 mx-0 mt-4">
                             <div class="col-md-9 col-lg-8">
@@ -566,7 +566,25 @@
                                         + {{ \App\CentralLogics\Helpers::format_currency($del_c) }}
                                         <hr>
                                     </dd>
+                                    @if ($order['partially_paid_amount'] > 0)
 
+                                    <dt class="col-6">{{ translate('messages.partially_paid_amount') }}:</dt>
+                                    <dd class="col-6">
+                                        @php($partially_paid_amount = $order['partially_paid_amount'])
+                                            {{ \App\CentralLogics\Helpers::format_currency($partially_paid_amount) }}
+                                    </dd>
+                                    <dt class="col-6">{{ translate('messages.due_amount') }}:</dt>
+                                    @if ($order['payment_method'] == 'partial_payment')
+
+                                    <dd class="col-6">
+                                            {{ \App\CentralLogics\Helpers::format_currency($order->order_amount-$partially_paid_amount) }}
+                                    </dd>
+                                    @else
+                                    <dd class="col-6">
+                                            {{ \App\CentralLogics\Helpers::format_currency(0) }}
+                                    </dd>
+                                    @endif
+                                    @endif
                                     <dt class="col-6">{{ translate('messages.total') }}:</dt>
                                     <dd class="col-6">
                                         {{ \App\CentralLogics\Helpers::format_currency($product_price + $del_c + $total_tax_amount + $total_addon_price - $coupon_discount_amount - $store_discount_amount + $order->dm_tips) }}

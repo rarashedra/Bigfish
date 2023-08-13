@@ -79,8 +79,8 @@
                                         <!--amount need to be in paisa-->
                                         <script src="https://checkout.razorpay.com/v1/checkout.js"
                                                 data-key="{{ Config::get('razor.razor_key') }}"
-                                                data-amount="{{$order->order_amount*100}}"
-                                                data-buttontext="Pay {{$order->order_amount}} {{\App\CentralLogics\Helpers::currency_code()}}"
+                                                data-amount="{{$order->order_amount*100 -  $order->partially_paid_amount}}"
+                                                data-buttontext="Pay {{$order->order_amount - $order->partially_paid_amount}} {{\App\CentralLogics\Helpers::currency_code()}}"
                                                 data-name="{{\App\Models\BusinessSetting::where(['key'=>'business_name'])->first()->value}}"
                                                 data-description="{{$order['id']}}"
                                                 data-image="{{asset('storage/app/public/business/'.\App\Models\BusinessSetting::where(['key'=>'logo'])->first()->value)}}"
@@ -155,7 +155,7 @@
                             </div>
                         </div>
                     @endif
-                    
+
                     @php($config=\App\CentralLogics\Helpers::get_business_settings('bigfish'))
                     @if(isset($config) && $config['status'])
                         <div class="col-md-6 mb-4 cursor-pointer">

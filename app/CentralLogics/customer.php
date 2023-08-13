@@ -45,6 +45,9 @@ class CustomerLogic
             }
         } else if ($transaction_type == 'order_place') {
             $debit = $amount;
+        }else if ($transaction_type == 'partial_payment') {
+            $debit = $amount;
+            $credit = 0.0;
         }
 
         $wallet_transaction->credit = $credit;
@@ -59,7 +62,7 @@ class CustomerLogic
             $user->save();
             $wallet_transaction->save();
             DB::commit();
-            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin', 'referrer'])) return $wallet_transaction;
+            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin', 'referrer','partial_payment'])) return $wallet_transaction;
             return true;
         } catch (\Exception $ex) {
             info($ex);

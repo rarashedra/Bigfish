@@ -1316,6 +1316,64 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-lg-4">
+                                    @php($partial_payment = \App\Models\BusinessSetting::where('key', 'partial_payment_status')->first())
+                                    @php($partial_payment = $partial_payment ? $partial_payment->value : 0)
+                                    <div class="form-group mb-0">
+                                        <label
+                                            class="toggle-switch h--45px toggle-switch-sm d-flex justify-content-between border rounded px-3 py-0 form-control">
+                                            <span class="pr-1 d-flex align-items-center switch--label">
+                                                <span class="line--limit-1">
+                                                    {{ translate('messages.partial_payment') }}
+                                                </span>
+                                                <span class="form-label-secondary text-danger d-flex"
+                                                    data-toggle="tooltip" data-placement="right"
+                                                    data-original-title="{{ translate('messages.If_enabled,_customers_can_make_partial_payments._For_example,_a_customer_can_pay_$20_initially_out_of_their_$50_payment_&_use_other_payment_methods_for_the_rest._Partial_payments_must_be_made_through_their_wallets.')}}"><img
+                                                        src="{{ asset('/public/assets/admin/img/info-circle.svg') }}"
+                                                        alt="{{ translate('messages.customer_varification_toggle') }}"> *
+                                                </span>
+                                            </span>
+                                            <input type="checkbox" onclick="toogleModal(event,'partial_payment','schedule-on.png','schedule-off.png','{{translate('messages.Want_to_enable')}} <strong>{{translate('messages.partial_payment_?')}}</strong>','{{translate('messages.Want_to_disable')}} <strong>{{translate('messages.partial_payment_?')}}</strong>',`<p>{{translate('messages.If_you_enable_this,_customers_can_choose_partial_payment_during_checkout.')}}</p>`,`<p>{{translate('messages.If_you_disable_this,_the_partial_payment_feature_will_be_hidden.')}}</p>`)" class="toggle-switch-input" value="1"
+                                                name="partial_payment_status" id="partial_payment"
+                                                {{ $partial_payment == 1 ? 'checked' : '' }}>
+                                            <span class="toggle-switch-label text">
+                                                <span class="toggle-switch-indicator"></span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-lg-4">
+                                    @php($partial_payment_method = \App\Models\BusinessSetting::where('key', 'partial_payment_method')->first())
+                                    <div class="form-group mb-0">
+                                        <label class="input-label text-capitalize d-flex alig-items-center"><span
+                                            class="line--limit-1">{{ translate('Can_Pay_the_Rest_Amount_using') }}
+                                        <span class="form-label-secondary" data-toggle="tooltip" data-placement="right" data-original-title="{{ translate('messages.Set_the_method(s)_that_customers_can_pay_the_remainder_after_partial_payment.') }}" alt="">
+                                            <img src="{{asset('public/assets/admin/img/info-circle.svg')}}" alt="">
+                                        </span>
+                                        </span>
+                                    </label>
+                                        <div class="resturant-type-group border">
+                                            <label class="form-check form--check mr-2 mr-md-4">
+                                                <input class="form-check-input" type="radio" value="cod" name="partial_payment_method" {{ $partial_payment_method ? ($partial_payment_method->value == 'cod' ? 'checked' : '') : '' }}>
+                                                <span class="form-check-label">
+                                                    {{translate('cod')}}
+                                                </span>
+                                            </label>
+                                            <label class="form-check form--check mr-2 mr-md-4">
+                                                <input class="form-check-input" type="radio" value="digital_payment" name="partial_payment_method" {{ $partial_payment_method ? ($partial_payment_method->value == 'digital_payment' ? 'checked' : '') : '' }}>
+                                                <span class="form-check-label">
+                                                    {{translate('digital_payment')}}
+                                                </span>
+                                            </label>
+                                            <label class="form-check form--check mr-2 mr-md-4">
+                                                <input class="form-check-input" type="radio" value="both" name="partial_payment_method" {{ $partial_payment_method ? ($partial_payment_method->value == 'both' ? 'checked' : '') : '' }}>
+                                                <span class="form-check-label">
+                                                    {{translate('both')}}
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-lg-4">
                                     @php($minimum_shipping_charge = \App\Models\BusinessSetting::where('key', 'minimum_shipping_charge')->first())
                                     <div class="form-group mb-0">
                                         <label class="form-label text-capitalize"

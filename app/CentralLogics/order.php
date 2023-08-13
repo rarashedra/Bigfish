@@ -4,6 +4,7 @@ namespace App\CentralLogics;
 
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\OrderPayment;
 use App\Models\OrderTransaction;
 use App\Models\AdminWallet;
 use App\Models\BusinessSetting;
@@ -91,14 +92,14 @@ class OrderLogic
                 Helpers::expenseCreate($store_d_amount,'discount_on_product',now(),$order->id,'vendor',$order->store->id);
                 Helpers::expenseCreate($amount_admin,'discount_on_product',now(),$order->id,'admin');
             }
-    
+
             if($order->store_discount_amount > 0  && $order->discount_on_product_by == 'admin')
             {
                 $store_discount_amount=$order->store_discount_amount;
                 Helpers::expenseCreate($store_discount_amount,'discount_on_product',now(),$order->id,'admin');
             }
-    
-    
+
+
             $order_amount = $order->order_amount - $order->delivery_charge - $order->total_tax_amount - $dm_tips + $order->coupon_discount_amount + $store_discount_amount;
             // comission in delivery charge
             $delivery_charge_comission = BusinessSetting::where('key', 'delivery_charge_comission')->first();
@@ -124,10 +125,10 @@ class OrderLogic
                 {
                     $comission_on_actual_delivery_fee = 0;
                 }else{
-    
+
                     $comission_on_actual_delivery_fee = ($order->original_delivery_charge > 0) ? $comission_on_delivery : 0;
                 }
-    
+
                 //final comission
                 $comission_on_store_amount = ($comission?($order_amount/ 100) * $comission:0);
                 $comission_amount = $comission_on_store_amount + $comission_on_actual_delivery_fee;
@@ -416,5 +417,37 @@ class OrderLogic
             ];
         }
         return $data;
+    }
+    public static function create_order_payment($order_id, $amount, $payment_status, $payment_method)
+    {
+        $payment = new OrderPayment();
+        $payment->order_id = $order_id;
+        $payment->amount = $amount;
+        $payment->payment_status = $payment_status;
+        $payment->payment_method = $payment_method;
+        if($payment->save()){
+            return true;
+        }
+
+        return false;
+
+    }
+
+    public static function update_unpaid_order_payment($order_id,$payment_method)
+    {
+        $payment = OrderPayment::where('payment_status','unpaid')->where('order_id',$order_id)->first();
+        if($payment){
+            $payment->payment_status = 'paid';
+            if($payment_method != 'partial_payment'){
+                $payment->payment_method = $payment_method;
+            }
+            if($payment->save()){
+                return true;
+            }
+
+            return false;
+        }
+        return true;
+
     }
 }

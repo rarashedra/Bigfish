@@ -96,6 +96,21 @@
                                     </span>
                                 </a>
                             </li>
+                            <li class="nav-item {{Request::is('store-panel/order/list/ongoing')?'active':''}}">
+                                <a class="nav-link " href="{{route('vendor.order.list',['on_going'])}}" title="{{translate('messages.ongoing')}} {{translate('messages.orders')}}">
+                                    <span class="tio-circle nav-indicator-icon"></span>
+                                    <span class="text-truncate sidebar--badge-container">
+                                        {{translate('messages.on_going')}} {{(config('order_confirmation_model') == 'store' || \App\CentralLogics\Helpers::get_store_data()->self_delivery_system)?'':translate('messages.take_away')}}
+                                            <span class="badge badge-soft-success badge-pill ml-1">
+                                            @if(config('order_confirmation_model') == 'store' || \App\CentralLogics\Helpers::get_store_data()->self_delivery_system)
+                                            {{\App\Models\Order::CustomOngoing()->where('store_id',\App\CentralLogics\Helpers::get_store_id())->StoreOrder()->OrderScheduledIn(30)->count()}}
+                                            @else
+                                            {{\App\Models\Order::CustomOngoing()->where(['store_id'=>\App\CentralLogics\Helpers::get_store_id(), 'order_type'=>'take_away'])->StoreOrder()->OrderScheduledIn(30)->count()}}
+                                            @endif
+                                        </span>
+                                    </span>
+                                </a>
+                            </li>
                             <li class="nav-item {{Request::is('store-panel/order/list/pending')?'active':''}}">
                                 <a class="nav-link " href="{{route('vendor.order.list',['pending'])}}" title="{{translate('messages.pending')}} {{translate('messages.orders')}}">
                                     <span class="tio-circle nav-indicator-icon"></span>
@@ -485,7 +500,7 @@
                         <small class="nav-subtitle" title="{{translate('messages.Report')}} {{translate('messages.section')}}">{{translate('messages.Report')}} {{translate('messages.section')}}</small>
                         <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                     </li>
-                    
+
                     @if(\App\CentralLogics\Helpers::employee_module_permission_check('report'))
                     <li class="navbar-vertical-aside-has-menu {{ Request::is('vendor/report/expense-report') ? 'active' : '' }}">
                         <a class="nav-link " href="{{ route('vendor.report.expense-report') }}" title="{{ translate('messages.expense_report') }}">

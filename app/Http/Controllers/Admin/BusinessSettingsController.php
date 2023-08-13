@@ -163,7 +163,12 @@ class BusinessSettingsController extends Controller
         DB::table('business_settings')->updateOrInsert(['key' => 'order_confirmation_model'], [
             'value' => $request['order_confirmation_model']
         ]);
-
+        DB::table('business_settings')->updateOrInsert(['key' => 'partial_payment_status'], [
+            'value' => $request['partial_payment_status']
+        ]);
+        DB::table('business_settings')->updateOrInsert(['key' => 'partial_payment_method'], [
+            'value' => $request['partial_payment_method']
+        ]);
         DB::table('business_settings')->updateOrInsert(['key' => 'tax'], [
             'value' => $request['tax']
         ]);

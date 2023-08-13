@@ -324,7 +324,7 @@ class DeliverymanController extends Controller
                 ]
             ], 406);
         }
-        
+
         if(Config::get('order_delivery_verification')==1 && $order->payment_method=='cash_on_delivery' &&  $request['status']=='delivered' && $order->otp != $request['otp'])
         {
             return response()->json([
@@ -454,7 +454,7 @@ class DeliverymanController extends Controller
         }
         $dm = DeliveryMan::where(['auth_token' => $request['token']])->first();
 
-        $order = Order::with(['customer', 'store','details','parcel_category'])->where(['delivery_man_id' => $dm['id'], 'id' => $request['order_id']])->Notpos()->first();
+        $order = Order::with(['customer', 'store','details','parcel_category','payments'])->where(['delivery_man_id' => $dm['id'], 'id' => $request['order_id']])->Notpos()->first();
         if(!$order)
         {
             return response()->json([

@@ -26,7 +26,7 @@ class BigfishController extends Controller
         $dataJson = json_encode(array(
             'StoreName' => $config['store_name'],
             'ProviderName' => 'OTP',
-            'Amount' => $order->order_amount,
+            'Amount' => $order->order_amount - $order->partially_paid_amount,
             'Currency' => 'HUF',
             'ResponseUrl'=>route('bigfish-callback'),
             'NotificationUrl' => route('bigfish-notification'),
@@ -44,7 +44,7 @@ class BigfishController extends Controller
         $dataJson = json_encode(array(
             'StoreName' => $config['store_name'],
             'ProviderName' => 'KHBSZEP',
-            'Amount' => $order->order_amount,
+            'Amount' => $order->order_amount - $order->partially_paid_amount,
             'Currency' => 'HUF',
             'ResponseUrl'=>route('bigfish-callback'),
             'NotificationUrl' => route('bigfish-notification'),
@@ -60,7 +60,7 @@ class BigfishController extends Controller
         $dataJson = json_encode(array(
             'StoreName' => $config['store_name'],
             'ProviderName' => 'MKBSZEP',
-            'Amount' => $order->order_amount,
+            'Amount' => $order->order_amount - $order->partially_paid_amount,
             'Currency' => 'HUF',
             'ResponseUrl'=>route('bigfish-callback'),
            'NotificationUrl' => route('bigfish-notification'),
@@ -168,12 +168,12 @@ class BigfishController extends Controller
     public function notification(Request $request){
        $data = $request->all();
       $transactionId = $data['commonData']['transactionId'];
-      
+
        $config = Helpers::get_business_settings('bigfish');
         $url = $config['mode'] == 'test' ? 'https://system-test.paymentgateway.hu/api/payment/' : 'https://system.paymentgateway.hu/api/payment/';
         $store_name = $config['store_name'];
         $api_key = $config['api_key'];
-        
+
        $dataJson = json_encode(array(
             'TransactionId' => $transactionId
             ));

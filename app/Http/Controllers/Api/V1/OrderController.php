@@ -17,6 +17,7 @@ use App\CentralLogics\CouponLogic;
 use Illuminate\Support\Facades\DB;
 use App\CentralLogics\ProductLogic;
 use App\CentralLogics\CustomerLogic;
+use App\CentralLogics\OrderLogic;
 use App\Http\Controllers\Controller;
 use App\Models\DMVehicle;
 use App\Models\OrderCancelReason;
@@ -39,7 +40,7 @@ class OrderController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
-        $order = Order::with(['store', 'delivery_man.rating', 'parcel_category', 'refund'])->withCount('details')->where(['id' => $request['order_id'], 'user_id' => $request->user()->id])->Notpos()->first();
+        $order = Order::with(['store', 'delivery_man.rating', 'parcel_category', 'refund','payments'])->withCount('details')->where(['id' => $request['order_id'], 'user_id' => $request->user()->id])->Notpos()->first();
         if ($order) {
             $order['store'] = $order['store'] ? Helpers::store_data_formatting($order['store']) : $order['store'];
             $order['delivery_address'] = $order['delivery_address'] ? json_decode($order['delivery_address']) : $order['delivery_address'];
@@ -56,9 +57,9 @@ class OrderController extends Controller
         }
         return response()->json($order, 200);
     }
-    
-    
-   
+
+
+
 
     public function place_order(Request $request)
     {
@@ -89,7 +90,13 @@ class OrderController extends Controller
         $store = null;
         $free_delivery_by = null;
         $distance_data = $request->distance;
-
+        if($request->partial_payment && !Helpers::get_business_settings('partial_payment_status')){
+            return response()->json([
+                'errors' => [
+                    ['code' => 'order_method', 'message' => translate('messages.partial_payment_is_not_active')]
+                ]
+            ], 403);
+        }
         $data =  DMVehicle::active()->where(function ($query) use ($distance_data) {
             $query->where('starting_coverage_area', '<=', $distance_data)->where('maximum_coverage_area', '>=', $distance_data);
         })
@@ -294,10 +301,10 @@ class OrderController extends Controller
         }
         $order->user_id = $request->user()->id;
         $order->order_amount = $request['order_amount'];
-        $order->payment_status = ($request['payment_method'] == 'wallet' || ($request['payment_method'] == 'stripe' && $platform != 'web')) ?  'paid' : 'unpaid';
-        $order->order_status =    ($request->payment_method == 'wallet' || ($request->payment_method == 'stripe' && $platform != 'web') || $request->payment_method == 'cash_on_delivery') ? 'confirmed' : 'pending';
+        $order->payment_status = ($request->partial_payment ? 'partially_paid' : ($request['payment_method'] == 'wallet' ? 'paid' : 'unpaid'));
+        $order->order_status = ($request->partial_payment ? 'confirmed' : ($request['payment_method'] == 'digital_payment' ? 'pending' : ($request->payment_method == 'wallet' ? 'confirmed' : 'pending')));
         $order->coupon_code = $request['coupon_code'];
-        $order->payment_method = $request->payment_method;
+        $order->payment_method = $request->partial_payment? 'partial_payment' :$request->payment_method;
         $order->transaction_reference = null;
         $order->order_note = $request['order_note'];
         $order->order_type = $request['order_type'];
@@ -618,6 +625,13 @@ class OrderController extends Controller
                 ]
             ], 203);
         }
+        if ($request->partial_payment && $request->user()->wallet_balance > $order->order_amount) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'partial_payment', 'message' => translate('messages.order_amount_must_be_greater_than_wallet_amount')]
+                ]
+            ], 203);
+        }
         if (isset($module_wise_delivery_charge) && $request->payment_method == 'cash_on_delivery' && $module_wise_delivery_charge->pivot->maximum_cod_order_amount && $order->order_amount > $module_wise_delivery_charge->pivot->maximum_cod_order_amount) {
             return response()->json([
                 'errors' => [
@@ -645,6 +659,22 @@ class OrderController extends Controller
             $customer->zone_id = $order->zone_id;
             $customer->save();
             if ($request->payment_method == 'wallet') CustomerLogic::create_wallet_transaction($order->user_id, $order->order_amount, 'order_place', $order->id);
+            if ($request->partial_payment) {
+                if ($request->user()->wallet_balance<=0) {
+                    return response()->json([
+                        'errors' => [
+                            ['code' => 'order_amount', 'message' => translate('messages.insufficient_balance_for_partial_amount')]
+                        ]
+                    ], 203);
+                }
+                $p_amount = min($request->user()->wallet_balance, $order->order_amount);
+                $unpaid_amount = $order->order_amount - $p_amount;
+                $order->partially_paid_amount = $p_amount;
+                $order->save();
+                CustomerLogic::create_wallet_transaction($order->user_id, $p_amount, 'partial_payment', $order->id);
+                OrderLogic::create_order_payment($order->id, $p_amount, 'paid', 'wallet');
+                OrderLogic::create_order_payment($order->id, $unpaid_amount, 'unpaid', $request->payment_method);
+            }
             DB::commit();
             Helpers::send_order_notification($order);
             //PlaceOrderMail
@@ -1003,10 +1033,10 @@ class OrderController extends Controller
             ]
         ], 403);
     }
-    
-    
-    
-    
+
+
+
+
       public function stripecheck(Request $request)
     {
         $validator = Validator::make($request->all(), [

@@ -187,7 +187,7 @@
                                     <span>{{ translate('messages.payment') }} {{ translate('messages.method') }}</span> <span>:</span>
                                     <span>{{ translate(str_replace('_', ' ', $order['payment_method'])) }}</span>
                                 </h6>
-                                 
+
                                 <h6 class="">
                                     @if ($order['transaction_reference'] == null)
                                         <span>{{ translate('messages.reference') }} {{ translate('messages.code') }}</span> <span>:</span>
@@ -742,46 +742,46 @@
                             </div>
                             <?php
                             $coupon_discount_amount = $order['coupon_discount_amount'];
-                            
+
                             $total_price = $product_price + $total_addon_price - $store_discount_amount - $coupon_discount_amount;
-                            
+
                             $total_tax_amount = $order['total_tax_amount'];
                             if($order->tax_status == 'included'){
                                 $total_tax_amount=0;
                             }
                             $deliverman_tips = $order['dm_tips'];
-                            
+
                             if ($editing) {
                                 $store_discount = \App\CentralLogics\Helpers::get_store_discount($order->store);
                                 if (isset($store_discount)) {
                                     if ($product_price + $total_addon_price < $store_discount['min_purchase']) {
                                         $store_discount_amount = 0;
                                     }
-                            
+
                                     if ($store_discount_amount > $store_discount['max_discount'] && $store_discount_amount > $store_discount['max_discount']) {
                                         $store_discount_amount = $store_discount['max_discount'];
                                     }
                                 }
                                 $coupon_discount_amount = $coupon ? \App\CentralLogics\CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $store_discount_amount) : $order['coupon_discount_amount'];
                                 $tax = $order->store->tax;
-                            
+
                                 $total_price = $product_price + $total_addon_price - $store_discount_amount - $coupon_discount_amount;
-                            
+
                                 $total_tax_amount = $tax > 0 ? ($total_price * $tax) / 100 : 0;
-                            
+
                                 $total_tax_amount = round($total_tax_amount, 2);
 
                                 $tax_included = \App\Models\BusinessSetting::where(['key'=>'tax_included'])->first() ?  \App\Models\BusinessSetting::where(['key'=>'tax_included'])->first()->value : 0;
                                 if ($tax_included ==  1){
                                     $total_tax_amount=0;
                                 }
-                            
+
                                 $store_discount_amount = round($store_discount_amount, 2);
-                            
+
                                 if ($order->store->free_delivery) {
                                     $del_c = 0;
                                 }
-                            
+
                                 $free_delivery_over = \App\Models\BusinessSetting::where('key', 'free_delivery_over')->first()->value;
                                 if (isset($free_delivery_over)) {
                                     if ($free_delivery_over <= $product_price + $total_addon_price - $coupon_discount_amount - $store_discount_amount) {
@@ -794,7 +794,7 @@
                             } else {
                                 $store_discount_amount = $order['store_discount_amount'];
                             }
-                            
+
                             ?>
                         @endif
                         <div class="mx-3">
@@ -853,7 +853,25 @@
                                     <dt class="col-6">{{ translate('messages.delivery_man_tips') }}</dt>
                                     <dd class="col-6">
                                         + {{ \App\CentralLogics\Helpers::format_currency($deliverman_tips) }}</dd>
+                                        @if ($order['partially_paid_amount'] > 0)
 
+                                        <dt class="col-6">{{ translate('messages.partially_paid_amount') }}:</dt>
+                                        <dd class="col-6">
+                                            @php($partially_paid_amount = $order['partially_paid_amount'])
+                                                {{ \App\CentralLogics\Helpers::format_currency($partially_paid_amount) }}
+                                        </dd>
+                                        <dt class="col-6">{{ translate('messages.due_amount') }}:</dt>
+                                        @if ($order['payment_method'] == 'partial_payment')
+
+                                        <dd class="col-6">
+                                                {{ \App\CentralLogics\Helpers::format_currency($order->order_amount-$partially_paid_amount) }}
+                                        </dd>
+                                        @else
+                                        <dd class="col-6">
+                                                {{ \App\CentralLogics\Helpers::format_currency(0) }}
+                                        </dd>
+                                        @endif
+                                        @endif
                                     <dt class="col-6">{{ translate('messages.total') }}:</dt>
                                     <dd class="col-6">
 

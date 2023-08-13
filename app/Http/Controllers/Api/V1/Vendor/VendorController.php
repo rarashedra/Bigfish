@@ -30,7 +30,7 @@ class VendorController extends Controller
     {
         $vendor = $request['vendor'];
         $store = Helpers::store_data_formatting($vendor->stores[0], false);
-        $discount=Helpers::get_store_discount($vendor->stores[0]);  
+        $discount=Helpers::get_store_discount($vendor->stores[0]);
         unset($store['discount']);
         $store['discount']=$discount;
         $store['schedules']=$store->schedules()->get();
@@ -398,7 +398,7 @@ class VendorController extends Controller
         $order = Order::whereHas('store.vendor', function($query) use($vendor){
             $query->where('id', $vendor->id);
         })
-        ->with(['customer','details','delivery_man'])
+        ->with(['customer','details','delivery_man','payments'])
         ->where('id', $request['order_id'])
         ->first();
         if(!$order){
@@ -770,28 +770,28 @@ class VendorController extends Controller
                     if ($product_price + $total_addon_price < $store_discount['min_purchase']) {
                         $store_discount_amount = 0;
                     }
-        
+
                     if ($store_discount['max_discount'] != 0 && $store_discount_amount > $store_discount['max_discount']) {
                         $store_discount_amount = $store_discount['max_discount'];
                     }
                 }
             }
-    
+
             $coupon_discount_amount = $coupon ? CouponLogic::get_discount($coupon, $product_price + $total_addon_price - $store_discount_amount) : 0;
             $total_price = $product_price + $total_addon_price - $store_discount_amount - $coupon_discount_amount;
-    
+
             $tax = ($store->tax > 0)?$store->tax:0;
             $order->tax_status = 'excluded';
-    
+
             $tax_included =BusinessSetting::where(['key'=>'tax_included'])->first() ?  BusinessSetting::where(['key'=>'tax_included'])->first()->value : 0;
             if ($tax_included ==  1){
                 $order->tax_status = 'included';
             }
-    
+
             $total_tax_amount=Helpers::product_tax($total_price,$tax,$order->tax_status =='included');
-    
+
             $tax_a=$order->tax_status =='included'?0:$total_tax_amount;
-    
+
             $free_delivery_over = BusinessSetting::where('key', 'free_delivery_over')->first()->value;
             if (isset($free_delivery_over)) {
                 if ($free_delivery_over <= $product_price + $total_addon_price - $coupon_discount_amount - $store_discount_amount) {
@@ -799,12 +799,12 @@ class VendorController extends Controller
                     $free_delivery_by = 'admin';
                 }
             }
-    
+
             if ($store->free_delivery) {
                 $order->delivery_charge = 0;
                 $free_delivery_by = 'vendor';
             }
-    
+
             if ($coupon) {
                 if ($coupon->coupon_type == 'free_delivery') {
                     if ($coupon->min_purchase <= $product_price + $total_addon_price - $store_discount_amount) {
@@ -814,10 +814,10 @@ class VendorController extends Controller
                 }
                 $coupon->increment('total_uses');
             }
-    
+
             $order->coupon_discount_amount = round($coupon_discount_amount, config('round_up_to_digit'));
             $order->coupon_discount_title = $coupon ? $coupon->title : '';
-    
+
             $order->store_discount_amount = round($store_discount_amount, config('round_up_to_digit'));
             $order->total_tax_amount = round($total_tax_amount, config('round_up_to_digit'));
             $order->order_amount = round($total_price + $tax_a + $order->delivery_charge, config('round_up_to_digit'));

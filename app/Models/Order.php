@@ -72,6 +72,10 @@ class Order extends Model
     {
         return $this->belongsTo(Zone::class, 'zone_id');
     }
+    public function payments()
+    {
+        return $this->hasMany(OrderPayment::class);
+    }
 
     public function module()
     {

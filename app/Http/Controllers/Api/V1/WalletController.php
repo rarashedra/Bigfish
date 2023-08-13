@@ -21,7 +21,20 @@ class WalletController extends Controller
             return response()->json(['errors' => Helpers::error_processor($validator)], 403);
         }
 
-        $paginator = WalletTransaction::where('user_id', $request->user()->id)->latest()->paginate($request->limit, ['*'], 'page', $request->offset);
+        $paginator = WalletTransaction::where('user_id', $request->user()->id)
+        ->when($request['type'] && $request['type']=='order', function($query){
+            $query->whereIn('transaction_type', ['order_place', 'order_refund','partial_payment']);
+        })
+        ->when($request['type'] && $request['type']=='loyalty_point', function($query){
+            $query->whereIn('transaction_type', ['loyalty_point']);
+        })
+        ->when($request['type'] && $request['type']=='add_fund', function($query){
+            $query->whereIn('transaction_type', ['add_fund']);
+        })
+        ->when($request['type'] && $request['type']=='referrer', function($query){
+            $query->whereIn('transaction_type', ['referrer']);
+        })
+        ->latest()->paginate($request->limit, ['*'], 'page', $request->offset);
 
         $data = [
             'total_size' => $paginator->total(),
