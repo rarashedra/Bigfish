@@ -91,7 +91,7 @@ class OrderController extends Controller
                 return $query->Scheduled();
             })
             ->when($status == 'on_going', function ($query) {
-                return $query->Ongoing();
+                return $query->CustomOngoing();
             })
             ->when(($status != 'all' && $status != 'scheduled' && $status != 'canceled' && $status != 'rejected' && $status != 'requested' && $status != 'refunded' && $status != 'delivered' && $status != 'failed'), function ($query) {
                 return $query->OrderScheduledIn(30);
@@ -122,13 +122,67 @@ class OrderController extends Controller
         $to_date = isset($request->to_date) ? $request->to_date : null;
         $order_type = isset($request->order_type) ? $request->order_type : null;
         $total = $orders->total();
-        if($status == 'on_going'){
-            return view('admin-views.order.ongoing_list', compact('orders', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total', 'order_type'));
+
+        if ($status == 'on_going') {
+            $incoming_orders = Order::with(['customer', 'store'])
+                ->when(isset($module_id), function ($query) use ($module_id) {
+                    return $query->module($module_id);
+                })
+                ->when(isset($request->zone), function ($query) use ($request) {
+                    return $query->whereHas('store', function ($q) use ($request) {
+                        return $q->whereIn('zone_id', $request->zone);
+                    });
+                })
+                ->whereIn('order_status', ['confirmed', 'pending', 'accepted'])
+                ->when(($status != 'all' && $status != 'scheduled' && $status != 'canceled' && $status != 'rejected' && $status != 'requested' && $status != 'refunded' && $status != 'delivered' && $status != 'failed'), function ($query) {
+                    return $query->OrderScheduledIn(30);
+                })
+                ->StoreOrder()
+                ->module(Config::get('module.current_module_id'))
+                ->orderBy('schedule_at', 'desc')
+                ->paginate(config('default_pagination'));
+
+            $outgoing_orders = Order::with(['customer', 'store'])
+                ->when(isset($module_id), function ($query) use ($module_id) {
+                    return $query->module($module_id);
+                })
+                ->when(isset($request->zone), function ($query) use ($request) {
+                    return $query->whereHas('store', function ($q) use ($request) {
+                        return $q->whereIn('zone_id', $request->zone);
+                    });
+                })
+                ->where('order_status', 'processing')
+                ->when(($status != 'all' && $status != 'scheduled' && $status != 'canceled' && $status != 'rejected' && $status != 'requested' && $status != 'refunded' && $status != 'delivered' && $status != 'failed'), function ($query) {
+                    return $query->OrderScheduledIn(30);
+                })
+                ->StoreOrder()
+                ->module(Config::get('module.current_module_id'))
+                ->orderBy('schedule_at', 'desc')
+                ->paginate(config('default_pagination'));
+
+            $handover_orders = Order::with(['customer', 'store'])
+                ->when(isset($module_id), function ($query) use ($module_id) {
+                    return $query->module($module_id);
+                })
+                ->when(isset($request->zone), function ($query) use ($request) {
+                    return $query->whereHas('store', function ($q) use ($request) {
+                        return $q->whereIn('zone_id', $request->zone);
+                    });
+                })
+                ->where('order_status', 'handover')
+                ->when(($status != 'all' && $status != 'scheduled' && $status != 'canceled' && $status != 'rejected' && $status != 'requested' && $status != 'refunded' && $status != 'delivered' && $status != 'failed'), function ($query) {
+                    return $query->OrderScheduledIn(30);
+                })
+                ->StoreOrder()
+                ->module(Config::get('module.current_module_id'))
+                ->orderBy('schedule_at', 'desc')
+                ->paginate(config('default_pagination'));
+            return view('admin-views.order.ongoing_list', compact('incoming_orders', 'outgoing_orders', 'handover_orders', 'orders', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total', 'order_type'));
         }
         return view('admin-views.order.list', compact('orders', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total', 'order_type'));
     }
 
-    public function dispatch_list($module,$status, Request $request)
+    public function dispatch_list($module, $status, Request $request)
     {
         $module_id = $request->query('module_id', null);
 
@@ -140,7 +194,7 @@ class OrderController extends Controller
         Order::where(['checked' => 0])->update(['checked' => 1]);
 
         $orders = Order::with(['customer', 'store'])
-            ->whereHas('module', function($query) use($module){
+            ->whereHas('module', function ($query) use ($module) {
                 $query->where('id', $module);
             })
             ->when(isset($module_id), function ($query) use ($module_id) {
@@ -178,7 +232,7 @@ class OrderController extends Controller
         $to_date = isset($request->to_date) ? $request->to_date : null;
         $total = $orders->total();
 
-        return view('admin-views.order.distaptch_list', compact('orders','module', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total'));
+        return view('admin-views.order.distaptch_list', compact('orders', 'module', 'status', 'orderstatus', 'scheduled', 'vendor_ids', 'zone_ids', 'from_date', 'to_date', 'total'));
     }
 
     public function details(Request $request, $id)
@@ -197,19 +251,19 @@ class OrderController extends Controller
         if (isset($order)) {
             if (isset($order->store)) {
                 $deliveryMen = DeliveryMan::where('zone_id', $order->store->zone_id)
-                ->where(function($query)use($order){
-                            $query->where('vehicle_id',$order->dm_vehicle_id)->orWhereNull('vehicle_id');
+                    ->where(function ($query) use ($order) {
+                        $query->where('vehicle_id', $order->dm_vehicle_id)->orWhereNull('vehicle_id');
                     })->available()->active()->get();
             } else {
                 // $deliveryMen = isset($order->zone_id) ? DeliveryMan::where('zone_id', $order->zone_id)->zonewise()->available()->active()->get() : [];
 
-                if($order->store !== null){
-                    $deliveryMen = isset($order->zone_id) ? DeliveryMan::where('zone_id', $order->store->zone_id)->where(function($query)use($order){
-                            $query->where('vehicle_id',$order->dm_vehicle_id)->orWhereNull('vehicle_id');
+                if ($order->store !== null) {
+                    $deliveryMen = isset($order->zone_id) ? DeliveryMan::where('zone_id', $order->store->zone_id)->where(function ($query) use ($order) {
+                        $query->where('vehicle_id', $order->dm_vehicle_id)->orWhereNull('vehicle_id');
                     })
-                    ->available()->active()->get():[];
-                } else{
-                    $deliveryMen = DeliveryMan::where('zone_id', '=', NULL)->where('vehicle_id',$order->dm_vehicle_id)->active()->get();
+                        ->available()->active()->get() : [];
+                } else {
+                    $deliveryMen = DeliveryMan::where('zone_id', '=', NULL)->where('vehicle_id', $order->dm_vehicle_id)->active()->get();
                 }
             }
             $category = $request->query('category_id', 0);
@@ -334,7 +388,7 @@ class OrderController extends Controller
     public function status(Request $request)
     {
         $request->validate([
-            'reason'=>'required_if:order_status,canceled'
+            'reason' => 'required_if:order_status,canceled'
         ]);
 
         $order = Order::with(['details', 'store' => function ($query) {
@@ -533,8 +587,8 @@ class OrderController extends Controller
             $deliveryman->save();
             $deliveryman->increment('assigned_order_count');
             $fcm_token = $order->customer->cm_firebase_token;
-            $value = Helpers::order_status_update_message('accepted',$order->module->module_type,$order->customer?
-            $order->customer->current_language_key:'en');
+            $value = Helpers::order_status_update_message('accepted', $order->module->module_type, $order->customer ?
+                $order->customer->current_language_key : 'en');
             try {
                 if ($value) {
                     $data = [

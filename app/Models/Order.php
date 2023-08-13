@@ -32,7 +32,7 @@ class Order extends Model
         'original_delivery_charge'=>'float',
         'receiver_details'=>'array',
         'dm_tips'=>'float',
-        'distance'=>'float', 
+        'distance'=>'float',
         'prescription_order' => 'boolean'
     ];
 
@@ -127,6 +127,10 @@ class Order extends Model
     public function scopeOngoing($query)
     {
         return $query->whereIn('order_status', ['accepted','confirmed','processing','handover','picked_up']);
+    }
+    public function scopeCustomOngoing($query)
+    {
+        return $query->whereIn('order_status', ['pending','accepted','confirmed','processing','handover','picked_up']);
     }
 
     public function scopeItemOnTheWay($query)

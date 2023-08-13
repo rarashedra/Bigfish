@@ -40,8 +40,7 @@
             <!-- Table -->
             <div class="col-lg-4">
                 <div>
-                    @php($incomming = $orders->whereIn('order_status',['confirmed','pending','accepted'])->count())
-                    <h1 class="text-center">{{ translate('messages.incomming') }} <span>({{$incomming }})</span></h1>
+                    <h4 class="text-center">{{ translate('messages.incomming') }} <span>({{$incoming_orders->total() }})</span></h4>
                 </div>
                 <div class="table-responsive datatable-custom table-primary">
                     <table id="datatable"
@@ -70,9 +69,8 @@
                         </thead>
 
                         <tbody id="set-rows">
-                        @foreach($orders as $key=>$order)
+                        @foreach($incoming_orders as $key=>$order)
 
-                            @if ($order->order_status == in_array($order->order_status, ['pending','confirmed','accepted']))
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -140,7 +138,6 @@
                                     @endif
                                 </td>
                             </tr>
-                            @endif
 
                         @endforeach
                         </tbody>
@@ -149,8 +146,7 @@
             </div>
             <div class="col-lg-4">
                 <div>
-                    @php($outgoing = $orders->where('order_status','processing')->count())
-                    <h1 class="text-center">{{ translate('messages.outgoing') }} <span>({{ $outgoing }})</span></h1>
+                    <h4 class="text-center">{{ translate('messages.outgoing') }} <span>({{ $outgoing_orders->total() }})</span></h4>
                 </div>
                 <div class="table-responsive datatable-custom table table-success table-striped">
                     <table id="datatable"
@@ -179,9 +175,7 @@
                         </thead>
 
                         <tbody id="set-rows">
-                        @foreach($orders as $key=>$order)
-
-                            @if ($order->order_status == 'processing')
+                        @foreach($outgoing_orders as $key=>$order)
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -249,7 +243,6 @@
                                     @endif
                                 </td>
                             </tr>
-                            @endif
 
                         @endforeach
                         </tbody>
@@ -258,8 +251,7 @@
             </div>
             <div class="col-lg-4">
                 <div>
-                    @php($ready = $orders->where('order_status','handover')->count())
-                    <h1 class="text-center">{{ translate('messages.Ready') }} <span>({{ $ready }})</span></h1>
+                    <h4 class="text-center">{{ translate('messages.Ready') }} <span>({{ $handover_orders->total() }})</span></h4>
                 </div>
                 <div class="table-responsive datatable-custom table-primary">
                     <table id="datatable"
@@ -288,8 +280,7 @@
                         </thead>
 
                         <tbody id="set-rows">
-                        @foreach($orders as $key=>$order)
-                        @if ($order->order_status == 'handover')
+                        @foreach($handover_orders as $key=>$order)
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -357,7 +348,6 @@
                                     @endif
                                 </td>
                             </tr>
-                            @endif
 
                         @endforeach
                         </tbody>

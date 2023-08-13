@@ -234,7 +234,7 @@ class ConfigServiceProvider extends ServiceProvider
 
                 Config::set('config_paytm', $config);
             }
-      
+
         } catch (\Exception $ex) {
 
         }
