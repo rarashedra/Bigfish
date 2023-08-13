@@ -2715,4 +2715,7 @@
   'Registration request successfull' => 'Registration request successfull',
   'ongoing' => 'Ongoing',
   'on going' => 'On going',
+  'incomming' => 'Incomming',
+  'outgoing' => 'Outgoing',
+  'Ready' => 'Ready',
 );

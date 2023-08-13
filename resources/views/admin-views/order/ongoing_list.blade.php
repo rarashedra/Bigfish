@@ -36,10 +36,14 @@
             <!-- Header -->
 
             <!-- End Header -->
-
+       <div class="row">
             <!-- Table -->
             <div class="col-lg-4">
-                <div class="table-responsive datatable-custom">
+                <div>
+                    @php($incomming = $orders->whereIn('order_status',['confirmed','pending','accepted'])->count())
+                    <h1 class="text-center">{{ translate('messages.incomming') }} <span>({{$incomming }})</span></h1>
+                </div>
+                <div class="table-responsive datatable-custom table-primary">
                     <table id="datatable"
                            class="table table-hover table-borderless table-thead-bordered table-nowrap table-align-middle card-table fz--14px"
                            data-hs-datatables-options='{
@@ -68,6 +72,7 @@
                         <tbody id="set-rows">
                         @foreach($orders as $key=>$order)
 
+                            @if ($order->order_status == in_array($order->order_status, ['pending','confirmed','accepted']))
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -135,6 +140,7 @@
                                     @endif
                                 </td>
                             </tr>
+                            @endif
 
                         @endforeach
                         </tbody>
@@ -142,7 +148,11 @@
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="table-responsive datatable-custom">
+                <div>
+                    @php($outgoing = $orders->where('order_status','processing')->count())
+                    <h1 class="text-center">{{ translate('messages.outgoing') }} <span>({{ $outgoing }})</span></h1>
+                </div>
+                <div class="table-responsive datatable-custom table table-success table-striped">
                     <table id="datatable"
                            class="table table-hover table-borderless table-thead-bordered table-nowrap table-align-middle card-table fz--14px"
                            data-hs-datatables-options='{
@@ -171,6 +181,7 @@
                         <tbody id="set-rows">
                         @foreach($orders as $key=>$order)
 
+                            @if ($order->order_status == 'processing')
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -238,6 +249,7 @@
                                     @endif
                                 </td>
                             </tr>
+                            @endif
 
                         @endforeach
                         </tbody>
@@ -245,7 +257,11 @@
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="table-responsive datatable-custom">
+                <div>
+                    @php($ready = $orders->where('order_status','handover')->count())
+                    <h1 class="text-center">{{ translate('messages.Ready') }} <span>({{ $ready }})</span></h1>
+                </div>
+                <div class="table-responsive datatable-custom table-primary">
                     <table id="datatable"
                            class="table table-hover table-borderless table-thead-bordered table-nowrap table-align-middle card-table fz--14px"
                            data-hs-datatables-options='{
@@ -273,7 +289,7 @@
 
                         <tbody id="set-rows">
                         @foreach($orders as $key=>$order)
-
+                        @if ($order->order_status == 'handover')
                             <tr class="status-{{$order['order_status']}} class-all">
                                 <td class="table-column-pl-0">
                                     <a href="{{route($parcel_order?'admin.parcel.order.details':'admin.order.details',['id'=>$order['id']])}}">{{$order['id']}}</a>
@@ -341,6 +357,7 @@
                                     @endif
                                 </td>
                             </tr>
+                            @endif
 
                         @endforeach
                         </tbody>
@@ -348,7 +365,7 @@
                 </div>
             </div>
             <!-- End Table -->
-
+        </div>
 
             @if(count($orders) !== 0)
             <hr>

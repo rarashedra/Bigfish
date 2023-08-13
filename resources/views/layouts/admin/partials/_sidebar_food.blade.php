@@ -91,6 +91,17 @@
                                     </span>
                                 </a>
                             </li>
+                            <li class="nav-item {{ Request::is('admin/order/list/ongoing') ? 'active' : '' }}">
+                                <a class="nav-link " href="{{ route('admin.order.list', ['on_going']) }}" title="{{ translate('messages.ongoing') }} {{ translate('messages.orders') }}">
+                                    <span class="tio-circle nav-indicator-icon"></span>
+                                    <span class="text-truncate sidebar--badge-container">
+                                        {{ translate('messages.ongoing') }}
+                                        <span class="badge badge-soft-info badge-pill ml-1">
+                                            {{ \App\Models\Order::Ongoing()->OrderScheduledIn(30)->StoreOrder()->module(Config::get('module.current_module_id'))->count() }}
+                                        </span>
+                                    </span>
+                                </a>
+                            </li>
                             <li class="nav-item {{ Request::is('admin/order/list/scheduled') ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('admin.order.list', ['scheduled']) }}" title="{{ translate('messages.scheduled_orders') }}">
                                     <span class="tio-circle nav-indicator-icon"></span>
@@ -237,7 +248,7 @@
                     @endif
                     <!-- End Orders -->
 
-                    
+
                 <!-- Marketing section -->
                 <li class="nav-item">
                     <small class="nav-subtitle" title="{{ translate('Promotion Management') }}">{{ translate('Promotion Management') }}</small>
@@ -474,7 +485,7 @@
                                 return $query->where('status', null);
                             })->module(Config::get('module.current_module_id'))->get())
                             @if (count($new_str)>0)
-                                
+
                             <span class="btn-status btn-status-danger border-0 size-8px"></span>
                             @endif
                         </span>
